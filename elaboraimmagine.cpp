@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     char* fileoutput = argv[5];
     
     if (!fileinput || !comando || dimensioni_x < 0 || dimensioni_y < 0 || !fileoutput) {
-        cout << "parametri mancanti\n";
+        cout << "Errore: mancano alcuni parametri\n";
         return 0;
     }
     
