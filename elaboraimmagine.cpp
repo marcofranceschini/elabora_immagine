@@ -3,6 +3,8 @@
  * elaboraimmagine <fileinput> <comando> <dimensioni_x> <dimensioni_y> <fileoutput>
 */
 
+#include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <iostream>
 
