@@ -8,6 +8,23 @@
 
 using namespace std;
 
+#define LARG	512
+#define LP2		9
+
+// immagine sorgente
+unsigned char ImmagineS[LARG * LARG];
+
+// immagine destinazione
+unsigned char ImmagineD[LARG * LARG];
+
+// header per file BitMap monocromatici
+#define DIM_HEAD_BMP 1078
+
+unsigned char Header[DIM_HEAD_BMP];
+
+static void caricaBmp(const char *Nome, unsigned char *Dove, int x, int y);
+static void salvaBmp(const char *Nome, unsigned char *DaDove, int x, int y);
+
 int main(int argc, char* argv[]) {
     
     char* fileinput = argv[1];
@@ -17,7 +34,7 @@ int main(int argc, char* argv[]) {
     char* fileoutput = argv[5];
     
     if (!fileinput || !comando || dimensioni_x < 0 || dimensioni_y < 0 || !fileoutput) {
-        cout << "missing params\n";
+        cout << "parametri mancanti\n";
         return 0;
     }
     
@@ -28,8 +45,28 @@ int main(int argc, char* argv[]) {
             << "fileoutput: " << fileoutput << "\n";
             
     
-    
-    
-    
-    
+}
+
+static void caricaBmp(const char *Nome, unsigned char *Dove, int x, int y) {
+	FILE *fHan = fopen(Nome, "rb");
+	if(fHan == NULL) {
+		printf("errore!\n");
+		exit(1);
+	}
+
+	fread(Header, DIM_HEAD_BMP, 1, fHan);
+	fread(Dove, x * y, 1, fHan);
+	fclose(fHan);
+}
+
+static void salvaBmp(const char *Nome, unsigned char *DaDove, int x, int y) {
+	FILE *fHan = fopen(Nome, "wb");
+	if(fHan == NULL) {
+		printf("errore!\n");
+		exit(1);
+	}
+
+	fwrite(Header, DIM_HEAD_BMP, 1, fHan);
+	fwrite(DaDove, x * y, 1, fHan);
+	fclose(fHan);
 }
