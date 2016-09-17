@@ -39,10 +39,10 @@ char* FIRMAsorgente = new char[2];  // Vettore contenente la firma del file in i
 
 // informazioni sezioni file (header di destinazione? e' lo stesso?)
 unsigned char* header;
-unsigned char* sorgente;		// spazio di memoria per l'immagine iniziale
-unsigned char* buffer;			// spazio di memoria per l'immagine filtrata
-unsigned char* destinazione;	// spazio di memoria per l'immagine filtrata ed eventualmente riscalata
+unsigned char* sorgente;
+unsigned char* destinazione;
 unsigned char palette[1024]; // 4 byte x 256 colori
+float* buffer;
 
 // kernel
 #define dimKernel 3
@@ -90,34 +90,73 @@ static bool caricaBmp(const char* path);
 void stampaInfo();
 void convoluzione();
 int applicaKernel(int x, int y, int c);
-int interpolazione(float x, float y, int c);
-void ridimensiona();
 static void salvaBmp(const char *path);
 
+int interpolazione(float x, float y) {
+	float v1, v2, v3, v4;
+	int X = (int) x;
+	int Y = (int) y;
+
+	x -= X;
+	y -= Y;
+
+	if (X < 0) X = 0;
+	if (X >= Wsorgente - 1) X = Wsorgente - 1;
+	if (Y < 0) Y = 0;
+	if (Y >= Hsorgente - 1) Y = Hsorgente - 1;
+
+	v1 = sorgente[X + (Wsorgente * Y)];
+	v2 = sorgente[X + 1 + (Wsorgente * Y)];
+	v3 = sorgente[X + (Wsorgente * (Y + 1))];
+	v4 = sorgente[X + 1 + (Wsorgente * (Y + 1))];
+
+	return( (v1 * (1 - x) * (1 - y)) +
+			(v2 * x * (1 - y)) +
+			(v3 * (1 - x) * y) +
+			(v4 * x * y) );
+}
+
+void deforma() {
+	int pixel;
+
+	for (int c = 0; c < 3; c++) {
+		for (int y = 0; y < Hdestinazione; y++) {
+			for (int x = 0; x < Wdestinazione; x++) {
+				float scalex = ((float) Wsorgente / Wdestinazione) * x;
+				float scaley = ((float) Hsorgente / Hdestinazione) * y;
+				pixel = interpolazione(scalex, scaley);
+				if (pixel > 255) pixel = 255;
+				if (pixel < 0) pixel = 0;
+				destinazione[x + (y * Wdestinazione)] = pixel;
+			}
+		}
+	}
+
+}
 
 int main(int argc, char* argv[]) {
 	
-	// Recupero parametri in input
+	// recupero parametri in input
     char* fileinput = argv[1];
     char* comando = argv[2];
     double dimensioni_x = atof(argv[3]);
     double dimensioni_y = atof(argv[4]);
     char* fileoutput = argv[5];
     
-    // Controllo parametri
+    // controllo parametri
     if (!fileinput || !comando || dimensioni_x < 0 || dimensioni_y < 0 || !fileoutput) {
         cout << "Errore: mancano alcuni parametri, sintassi:\n";
         cout << "elaboraimmagine <fileinput> <comando> <dimensioni_x> <dimensioni_y> <fileoutput>\n";
         return 0;
     }
     
-    // Controllo comando
+    // controllo comando
     if (strcmp(comando, "blur") != 0 && strcmp(comando, "sharpen") != 0 && strcmp(comando, "outline") != 0 && strcmp(comando, "emboss") != 0 && strcmp(comando, "identity") != 0) {
     	cout << "Errore: comando \"" << comando << "\" non riconosciuto\n";
         return 0;
     }
     
-    // Controllo dimensioni della destinazione
+    // controllo dimensioni della destinazione
     if (dimensioni_x < 0 || dimensioni_y < 0) {
     	cout << "Errore: dimensioni errate\n";
         return 0;
@@ -133,8 +172,10 @@ int main(int argc, char* argv[]) {
     
     stampaInfo();	// Stampa le informazioni dell'header
     
+    // buffer = new float[Wsorgente * Hsorgente * 2];
+	destinazione = new unsigned char[Wsorgente * Hsorgente * 3];
+
 	// Applica il filtro
-	buffer = new unsigned char[Wsorgente * Hsorgente * 3];
 	if(strcmp(comando, "blur") == 0) {
 		std::copy(blur, blur + sizeof(blur), kernel);
 	}
@@ -153,10 +194,11 @@ int main(int argc, char* argv[]) {
 	convoluzione();
 
 	// Riscala l'immagine
-	destinazione = new unsigned char[Wdestinazione * Hdestinazione * 3];
-	ridimensiona();
+	if (Wsorgente*Hsorgente < Wdestinazione*Hdestinazione || Wsorgente*Hsorgente > Wdestinazione*Hdestinazione) {
+		deforma();
+	}
 
-	// Scrive output
+	// Scrivi output
 	salvaBmp(fileoutput);
 
 	return 0;
@@ -212,6 +254,8 @@ static bool caricaBmp(const char* path) {
 	fclose(f);
 	return true;
 }
+
+
 
 // Stampa le informazioni lette dal file
 void stampaInfo() {
@@ -279,7 +323,7 @@ void convoluzione() {
 	for (int c = 0; c < 3; c++)
 		for (int y = 0; y < Hsorgente; y++)
 			for (int x = 0; x < Wsorgente; x++)
-				buffer[x * 3 + (y * Wsorgente * 3) + c] = applicaKernel(x, y, c);
+				destinazione[x * 3 + (y * Wsorgente * 3) + c] = applicaKernel(x, y, c);
 }
 
 int applicaKernel(int x, int y, int c) {
@@ -301,47 +345,6 @@ int applicaKernel(int x, int y, int c) {
 	return(pixel);
 }
 
-void ridimensiona() {
-	int pixel;
-
-	for (int c = 0; c < 3; c++) {
-		for (int y = 0; y < Hdestinazione; y++) {
-			for (int x = 0; x < Wdestinazione; x++) {
-				float scalex = ((float) Wsorgente / Wdestinazione) * x;
-				float scaley = ((float) Hsorgente / Hdestinazione) * y;
-				pixel = interpolazione(scalex, scaley, c);
-				if (pixel > 255) pixel = 255;
-				if (pixel < 0) pixel = 0;
-				destinazione[x * 3 + (y * Wdestinazione * 3) + c] = pixel;
-			}
-		}
-	}
-}
-
-int interpolazione(float x, float y, int c) {
-	float v1, v2, v3, v4;
-	int X = (int) x;
-	int Y = (int) y;
-
-	x -= X;
-	y -= Y;
-	
-	if (X < 0) X = 0;
-	if (X >= Wsorgente - 1) X = Wsorgente - 1;
-	if (Y < 0) Y = 0;
-	if (Y >= Hsorgente - 1) Y = Hsorgente - 1;
-
-	v1 = buffer[X * 3 + (Wsorgente * Y * 3) + c];
-	v2 = buffer[(X + 1) * 3 + (Wsorgente * Y * 3) + c];
-	v3 = buffer[X * 3 + (Wsorgente * (Y + 1) * 3) + c];
-	v4 = buffer[(X + 1) * 3 + (Wsorgente * (Y + 1) * 3) + c];
-
-	return( (v1 * (1 - x) * (1 - y)) +
-			(v2 * x * (1 - y)) +
-			(v3 * (1 - x) * y) +
-			(v4 * x * y) );
-}
-
 static void salvaBmp(const char *path) {
 	FILE *f = fopen(path, "wb");
 	if(f == NULL) {
@@ -352,8 +355,8 @@ static void salvaBmp(const char *path) {
 	fwrite(header, OFFSETsorgente, 1, f);
 	fwrite(destinazione, Wdestinazione * Hdestinazione * 3, 1, f);
 	
-	// Scrivo nuove dimensioni nell'header del file
 	if (Wsorgente != Wdestinazione || Hsorgente != Hdestinazione) {
+		// Scrivo nuove dimensioni nell'header del file
 		fseek(f, 18, 0);
 	    fwrite(&Wdestinazione, sizeof(int), 1, f);
 	    fwrite(&Hdestinazione, sizeof(int), 1, f);
