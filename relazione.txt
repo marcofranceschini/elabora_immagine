@@ -1,0 +1,24 @@
+Progetto di Sistemi Multimediali
+ 
+Progetto 1 - Elaborazione di Immagine
+
+Componenti del gruppo:
+    Daniele Favaro 1069357
+    Marco Franceschini 1072066 
+	Fabiano Tavallini 1069358
+
+Anno accademico 2015/2016
+
+Esecuzione da riga di comando: 
+elaboraimmagine <fileinput> <filtro> <dimensioni_x> <dimensioni_y> <fileoutput>
+
+Lista filtri disponibili:
+    - sharpen
+    - blur  
+    - emboss
+    - outline
+    - identity
+    
+Il programma, come da consegna, riceve in input il PATH di un'immagine sorgente,
+un filtro da applicare tra quelli elencati, la dimensione in larghezza e altezza
+da applicare all'immagine in output ed, infine, il PATH per l'immagine in output.
