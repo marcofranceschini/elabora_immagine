@@ -12,7 +12,7 @@
 *	2015/2016
 *
 * Esecuzione da riga di comando: 
-*	elaboraimmagine <fileinput> <comando> <dimensioni_x> <dimensioni_y> <fileoutput>
+*	elaboraimmagine <fileinput> <filtro> <dimensioni_x> <dimensioni_y> <fileoutput>
 */
 
 #include <stdio.h>
