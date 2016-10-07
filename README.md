@@ -2,7 +2,7 @@
 
 **Progetto 1 - Elaborazione di Immagine**
 
-*Specifiche*
+*Specifiche* - 
 Sviluppo di una applicazione, lanciata da linea di comando, in grado di elaborare un’immagine a
 colori in formato BMP RGB non compresso (Versione 3, .bmp) e di salvare il risultato,
 eventualmente riscalato a nuove dimensioni.
@@ -17,7 +17,7 @@ dove:
 Il `<comando>` e’ una stringa di testo che puo’ essere sia “blur” che “sharpen” e indica il tipo di filtro
 a convoluzione da applicare all’immagine. I kernel dei filtri possono essere semplici kernel 3x3.
 
-*Realizzazione*
+*Realizzazione* - 
 Come prima cosa l’applicazione deve leggere correttamente un file in formato .bmp non compresso
 a colori RGB versione 3.
 Un file di tale tipo e’ composto da un header iniziale contenente tutta una serie di informazioni (ad
